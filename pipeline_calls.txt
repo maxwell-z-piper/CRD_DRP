@@ -1,0 +1,29 @@
+python validation/01_validate_kcwikit_stacks.py \
+    --blue-icube /Users/maxpiper/KCWI_Data/redux/kskywizard/blue_kskywizard_icubes.fits \
+    --red-icube  /Users/maxpiper/KCWI_Data/redux/kskywizard/red_kskywizard_icubes.fits \
+    --output-dir validation_products/01_stack_integrity
+
+python validation/02_build_atmospheric_masks.py \
+    --blue-icube /Users/maxpiper/KCWI_Data/redux/kskywizard/blue_kskywizard_icubes.fits \
+    --red-icube  /Users/maxpiper/KCWI_Data/redux/kskywizard/red_kskywizard_icubes.fits \
+    --blue-reference-cube /Users/maxpiper/KCWI_Data/redux/kb241226_00118_icubes.fits \
+    --blue-reference-cube /Users/maxpiper/KCWI_Data/redux/kb241226_00119_icubes.fits \
+    --red-reference-cube /Users/maxpiper/KCWI_Data/redux/kr241226_00172_icubed.fits \
+    --red-reference-cube /Users/maxpiper/KCWI_Data/redux/kr241226_00173_icubed.fits \
+    --red-reference-cube /Users/maxpiper/KCWI_Data/redux/kr241226_00174_icubed.fits \
+    --red-reference-cube /Users/maxpiper/KCWI_Data/redux/kr241226_00175_icubed.fits \
+    --red-telluric-spectrum /Users/maxpiper/KCWI_Data/redux/kskywizard/kr241226_00110_standard_spec1d_tellmodel.fits \
+    --red-telluric-medium air \
+    --known-line-list data/known_sky_lines.ecsv \
+    --output-dir validation_products/02_atmospheric_masks
+
+python validation/03_validate_reduction_package.py \
+    --blue-icube /Users/maxpiper/KCWI_Data/redux/kskywizard/blue_kskywizard_icubes.fits \
+    --red-icube  /Users/maxpiper/KCWI_Data/redux/kskywizard/red_kskywizard_icubes.fits \
+    --blue-atmospheric-mask validation_products/02_atmospheric_masks/blue_atmospheric_mask.fits \
+    --blue-atmospheric-intervals validation_products/02_atmospheric_masks/blue_atmospheric_mask.ecsv \
+    --red-atmospheric-mask validation_products/02_atmospheric_masks/red_atmospheric_mask.fits \
+    --red-atmospheric-intervals validation_products/02_atmospheric_masks/red_atmospheric_mask.ecsv \
+    --stack-integrity-summary validation_products/01_stack_integrity/stack_integrity_summary.json \
+    --atmospheric-mask-summary validation_products/02_atmospheric_masks/atmospheric_mask_summary.json \
+    --output-dir validation_products/03_reduction_package
