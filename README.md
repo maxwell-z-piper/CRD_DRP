@@ -4,9 +4,8 @@ Scripts to reduce raw KCWI data into the needed data products for CRD_DAP. This 
 # Conda environments
 We will need three conda environments to run [kcwidrp](https://github.com/Keck-DataReductionPipelines/KCWI_DRP), [kskywizard](https://github.com/zhuyunz/KSkyWizard/tree/main), and [kcwikit](https://github.com/yuguangchen1/KcwiKit). For information on how to initialize these and clone their repos, see the above links.
 
-# =============================
+
 # ===== RED ARM REDUCTION =====
-# =============================
 
 In kcwidrp conda env, cd to where data are stored. Make sure kcwi.cfg is located in this directory. Run:	
 ```bash
@@ -124,9 +123,7 @@ Open the 'kcwikit_alignment_script.ipynb' file and change the beginning director
 
 
 
-==============================
-===== Blue ARM REDUCTION =====
-==============================
+# ===== Blue ARM REDUCTION =====
 
 In the kcwidrp conda env, cd into where data are stored. Make sure the kcwi.cfg file is in this directory. Run:	
 ```bash
