@@ -27,3 +27,8 @@ python validation/03_validate_reduction_package.py \
     --stack-integrity-summary validation_products/01_stack_integrity/stack_integrity_summary.json \
     --atmospheric-mask-summary validation_products/02_atmospheric_masks/atmospheric_mask_summary.json \
     --output-dir validation_products/03_reduction_package
+
+python validation/audit_CaT_mask_coverage.py \
+    --manifest validation_products/03_reduction_package/CRD_DRP_reduction_manifest.json \
+    --redshift 0.04138 \
+    --output-dir validation_products/CaT_audit
