@@ -180,7 +180,7 @@ construct their own production atmospheric masks.
 - Preserve the interval ECSV as human-readable provenance and the FITS mask as
   the exact machine-readable native-grid product.
 
-  ## Optional CaT mask audit
+## Optional CaT mask audit
 
 `validation/audit_CaT_mask_coverage.py` is an optional post-validation QC tool
 for RED/KCRM reductions intended for Ca II triplet work.
