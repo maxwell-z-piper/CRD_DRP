@@ -179,3 +179,41 @@ construct their own production atmospheric masks.
   `i/v/m/e + native atmospheric mask + validation`.
 - Preserve the interval ECSV as human-readable provenance and the FITS mask as
   the exact machine-readable native-grid product.
+
+  ## Optional CaT mask audit
+
+`validation/audit_CaT_mask_coverage.py` is an optional post-validation QC tool
+for RED/KCRM reductions intended for Ca II triplet work.
+
+It does not modify the CRD_DRP reduction package and is not a required pipeline
+stage. It checks how much of the expected CaT line cores and surrounding
+continuum survive the finalized atmospheric mask for a target at a specified
+redshift.
+
+Example:
+
+```bash
+python validation/audit_CaT_mask_coverage.py \
+    --manifest validation_products/03_reduction_package/CRD_DRP_reduction_manifest.json \
+    --redshift 0.04138 \
+    --output-dir validation_products/CaT_audit
+```
+
+The default audit uses the standard AIR CaT rest wavelengths
+8498.02, 8542.09, and 8662.14 A, converts them to the final RED science
+wavelength medium, and applies the supplied systemic redshift.
+
+It reports retention in:
+
+```text
+core window:     +/- 5 A observed
+context window:  +/- 25 A observed
+broad CaT window: 8400--8750 A rest
+```
+
+and, when `red_atmospheric_reference.ecsv` is available, separates masking
+caused by empirical sky emission, known lines, and telluric absorption.
+
+`GOOD_RETENTION` and `REVIEW` are reduction-mask geometry flags only. A
+successful audit does not replace the later CRD_DAP pPXF convergence and
+two-component identifiability tests.
