@@ -42,6 +42,9 @@ validation/02_build_atmospheric_masks.py
 validation/03_validate_reduction_package.py
         |
         v
+audit_CaT_mask_coverage.py
+        |
+        v
 CRD_DRP_reduction_manifest.json
         |
         v
