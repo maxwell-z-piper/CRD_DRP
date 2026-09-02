@@ -1,4 +1,4 @@
-# CRD_DAP_Reduction
+# CRD_DRP
 Scripts to reduce raw KCWI data into the needed data products for CRD_DAP. There are a few patches to KSkyWizard and KcwiKit for this reduction. There is also a validation script to check the quality of the reduction.
 
 # Conda environments
