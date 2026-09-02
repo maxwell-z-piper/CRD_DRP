@@ -1,0 +1,11 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: wavelength_angstrom, datatype: float64}
+# - {name: label, datatype: string}
+# - {name: medium, datatype: string}
+# schema: astropy-2.0
+wavelength_angstrom label medium
+5577.338 "[O I] 5577" air
+6300.304 "[O I] 6300" air
+6363.776 "[O I] 6364" air
