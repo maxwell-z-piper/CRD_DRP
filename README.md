@@ -105,7 +105,8 @@ python validation/02_build_atmospheric_masks.py \
 Repeat `--blue-reference-cube` or `--red-reference-cube` to use multiple
 independent exposures. If the target occupies much of the field, supply a
 2-D `--<arm>-reference-object-mask` where object pixels are >0 and sky pixels
-are 0.
+are 0. Note that the reference cubes should be from kcwidrp, not later in 
+the reduction.
 
 Products per arm:
 
