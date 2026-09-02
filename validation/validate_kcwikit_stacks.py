@@ -52,7 +52,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 
-SCRIPT_VERSION = "1.0.0"
+SCRIPT_VERSION = "1.1.0"
 MAD_TO_SIGMA = 1.482602218505602
 
 
@@ -269,6 +269,12 @@ def scan_arm(arm, cube, args):
     fail_map = np.zeros((ny, nx), dtype=int)
     candidates = []
 
+    # Keep complete counts even if a very bad/old reduction generates thousands
+    # of candidates.  The ECSV is capped only to keep the output manageable.
+    n_warning_total = 0
+    n_catastrophic_total = 0
+    candidate_table_truncated = False
+
     nonfinite_with_coverage = 0
     negative_variance_with_coverage = 0
     scanned_spaxels = 0
@@ -387,14 +393,21 @@ def scan_arm(arm, cube, args):
                     rep["GROUP_START_INDEX"] = min(g)
                     rep["GROUP_END_INDEX"] = max(g)
                     rep["GROUP_N_CHANNELS"] = len(g)
-                    candidates.append(rep)
                     if rep["SEVERITY"] == "FAIL":
+                        n_catastrophic_total += 1
                         fail_map[y, x] += 1
-                    if len(candidates) >= args.max_candidates_per_arm:
-                        raise RuntimeError(
-                            f"{arm.upper()} exceeded --max-candidates-per-arm. "
-                            "The stack is likely severely corrupted."
-                        )
+                    else:
+                        n_warning_total += 1
+
+                    # Do NOT abort an arm when the detailed-candidate table gets
+                    # large.  This is expected for an old/unfixed reduction.
+                    # Continue scanning the entire arm so RED can still be tested
+                    # even if BLUE is severely corrupted, and so the summary
+                    # counts/maps remain complete.
+                    if len(candidates) < args.max_candidates_per_arm:
+                        candidates.append(rep)
+                    else:
+                        candidate_table_truncated = True
 
     finite_flux = np.asarray(flux[np.isfinite(flux)], float)
     summary = {
@@ -407,9 +420,12 @@ def scan_arm(arm, cube, args):
         "median_finite_flux": float(np.median(finite_flux)) if finite_flux.size else np.nan,
         "nominal_effective_exposure_seconds": nominal_exp,
         "n_scanned_spaxels": scanned_spaxels,
-        "n_warning_candidate_groups": sum(r["SEVERITY"] == "WARN" for r in candidates),
-        "n_catastrophic_candidate_groups": sum(r["SEVERITY"] == "FAIL" for r in candidates),
+        "n_warning_candidate_groups": int(n_warning_total),
+        "n_catastrophic_candidate_groups": int(n_catastrophic_total),
         "n_spaxels_with_catastrophic_candidate": int(np.sum(fail_map > 0)),
+        "candidate_table_rows_stored": int(len(candidates)),
+        "candidate_table_truncated": bool(candidate_table_truncated),
+        "candidate_table_row_limit": int(args.max_candidates_per_arm),
         "n_positive_exposure_nonfinite_science_voxels": nonfinite_with_coverage,
         "n_positive_exposure_negative_variance_voxels": negative_variance_with_coverage,
     }
@@ -474,6 +490,9 @@ def plot_worst(arm, cube, candidates, nplot, half, path):
 
 
 def status(summary, fail_on_warning):
+    if summary.get("arm_error"):
+        return "ERROR"
+
     structural = (
         summary["n_positive_exposure_nonfinite_science_voxels"] > 0
         or summary["n_positive_exposure_negative_variance_voxels"] > 0
@@ -499,55 +518,90 @@ def main():
     summaries = {}
 
     for arm in ("blue", "red"):
-        paths = resolve_paths(args, arm)
-        print(f"\nLoading {arm.upper()}")
-        print(f"  icube: {paths.icube}")
-        print(f"  vcube: {paths.vcube or 'not supplied/found'}")
-        print(f"  mcube: {paths.mcube or 'not supplied/found'}")
-        print(f"  ecube: {paths.ecube or 'not supplied/found'}")
+        try:
+            paths = resolve_paths(args, arm)
+            print(f"\nLoading {arm.upper()}")
+            print(f"  icube: {paths.icube}")
+            print(f"  vcube: {paths.vcube or 'not supplied/found'}")
+            print(f"  mcube: {paths.mcube or 'not supplied/found'}")
+            print(f"  ecube: {paths.ecube or 'not supplied/found'}")
 
-        cube = load_stack(paths)
-        rows, summary, min_map, fail_map = scan_arm(arm, cube, args)
-        arm_status = status(summary, args.fail_on_warning)
-        summary["status"] = arm_status
-        summary["paths"] = {
-            "icube": str(paths.icube),
-            "vcube": str(paths.vcube) if paths.vcube else None,
-            "mcube": str(paths.mcube) if paths.mcube else None,
-            "ecube": str(paths.ecube) if paths.ecube else None,
-        }
-        summaries[arm] = summary
-        all_rows.extend(rows)
+            cube = load_stack(paths)
+            rows, summary, min_map, fail_map = scan_arm(arm, cube, args)
+            arm_status = status(summary, args.fail_on_warning)
+            summary["status"] = arm_status
+            summary["arm_error"] = None
+            summary["paths"] = {
+                "icube": str(paths.icube),
+                "vcube": str(paths.vcube) if paths.vcube else None,
+                "mcube": str(paths.mcube) if paths.mcube else None,
+                "ecube": str(paths.ecube) if paths.ecube else None,
+            }
+            summaries[arm] = summary
+            all_rows.extend(rows)
 
-        plot_map(
-            min_map,
-            f"{arm.upper()} final stack: minimum flux per spatial pixel",
-            "minimum finite flux",
-            out / f"{arm}_minimum_flux_map.png",
-        )
-        plot_map(
-            fail_map,
-            f"{arm.upper()} final stack: catastrophic negative groups",
-            "number of catastrophic groups",
-            out / f"{arm}_catastrophic_count_map.png",
-        )
-        plot_worst(
-            arm, cube, rows, args.plot_worst, args.plot_half_width_channels,
-            out / f"{arm}_worst_negative_candidates.png"
-        )
+            plot_map(
+                min_map,
+                f"{arm.upper()} final stack: minimum flux per spatial pixel",
+                "minimum finite flux",
+                out / f"{arm}_minimum_flux_map.png",
+            )
+            plot_map(
+                fail_map,
+                f"{arm.upper()} final stack: catastrophic negative groups",
+                "number of catastrophic groups",
+                out / f"{arm}_catastrophic_count_map.png",
+            )
+            plot_worst(
+                arm, cube, rows, args.plot_worst, args.plot_half_width_channels,
+                out / f"{arm}_worst_negative_candidates.png"
+            )
 
-        print(f"\n{arm.upper()} STACK VALIDATION: {arm_status}")
-        print(f"  minimum finite flux:              {summary['minimum_finite_flux']:.6g}")
-        print(f"  warning candidate groups:         {summary['n_warning_candidate_groups']}")
-        print(f"  catastrophic candidate groups:    {summary['n_catastrophic_candidate_groups']}")
-        print(f"  spaxels with catastrophic groups: {summary['n_spaxels_with_catastrophic_candidate']}")
-        print(f"  nonfinite science with e>0:       {summary['n_positive_exposure_nonfinite_science_voxels']}")
-        print(f"  negative variance with e>0:       {summary['n_positive_exposure_negative_variance_voxels']}")
+            print(f"\n{arm.upper()} STACK VALIDATION: {arm_status}")
+            print(f"  minimum finite flux:              {summary['minimum_finite_flux']:.6g}")
+            print(f"  warning candidate groups:         {summary['n_warning_candidate_groups']}")
+            print(f"  catastrophic candidate groups:    {summary['n_catastrophic_candidate_groups']}")
+            print(f"  spaxels with catastrophic groups: {summary['n_spaxels_with_catastrophic_candidate']}")
+            print(f"  candidate rows stored:            {summary['candidate_table_rows_stored']}")
+            if summary["candidate_table_truncated"]:
+                print(
+                    f"  NOTE: candidate ECSV truncated at {summary['candidate_table_row_limit']} rows; "
+                    "full-arm counts/maps are still complete."
+                )
+            print(f"  nonfinite science with e>0:       {summary['n_positive_exposure_nonfinite_science_voxels']}")
+            print(f"  negative variance with e>0:       {summary['n_positive_exposure_negative_variance_voxels']}")
+
+        except Exception as exc:
+            # One bad/old arm must not prevent validation of the other arm.
+            # Record the failure in the final JSON and continue.
+            print(
+                f"\n{arm.upper()} STACK VALIDATION: ERROR\n"
+                f"  {type(exc).__name__}: {exc}\n"
+                f"  Continuing to the other arm..."
+            )
+            summaries[arm] = {
+                "arm": arm.upper(),
+                "status": "ERROR",
+                "arm_error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                },
+                "paths": {
+                    "icube": str(getattr(args, f"{arm}_icube")),
+                    "vcube": getattr(args, f"{arm}_vcube"),
+                    "mcube": getattr(args, f"{arm}_mcube"),
+                    "ecube": getattr(args, f"{arm}_ecube"),
+                },
+            }
 
     write_candidate_table(all_rows, out / "stack_validation_candidates.ecsv")
 
     states = [summaries[a]["status"] for a in ("blue", "red")]
-    overall = "FAIL" if "FAIL" in states else ("WARN" if "WARN" in states else "PASS")
+    overall = (
+        "FAIL"
+        if ("FAIL" in states or "ERROR" in states)
+        else ("WARN" if "WARN" in states else "PASS")
+    )
 
     payload = {
         "script": "validate_kcwikit_stacks.py",
@@ -573,6 +627,8 @@ def main():
     print("\n" + "="*72)
     print(f"OVERALL KcwiKit STACK VALIDATION: {overall}")
     print("="*72)
+    print(f"BLUE: {summaries['blue']['status']}")
+    print(f"RED:  {summaries['red']['status']}")
     print(f"Candidates: {out/'stack_validation_candidates.ecsv'}")
     print(f"Summary:    {out/'stack_validation_summary.json'}")
 
