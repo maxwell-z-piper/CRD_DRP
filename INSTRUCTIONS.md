@@ -1,6 +1,14 @@
 # CRD_DRP
 Scripts to reduce raw KCWI data into the needed data products for CRD_DAP. There are a few patches to KSkyWizard and KcwiKit for this reduction. There is also a validation script to check the quality of the reduction.
 
+Ensure you have cloned the repository:
+```bash
+cd /Path/to/store/CRD_DRP
+git clone https://github.com/maxwell-z-piper/CRD_DRP.git
+```
+
+Note that the following instructions use the directories on my local machine - you will have to change them for your individual run. My directories are meant as an example and so it is read more easily.
+
 # Conda environments
 We will need three conda environments to run [kcwidrp](https://github.com/Keck-DataReductionPipelines/KCWI_DRP), [KSkyWizard](https://github.com/zhuyunz/KSkyWizard/tree/main), and [KcwiKit](https://github.com/yuguangchen1/KcwiKit). For information on how to initialize these and clone their repos, see the above links. Note ```CRD_DRP/patches/```, where you will have to replace a script in KcwiKit and KSkyWizard to run this pipeline.
 
@@ -44,7 +52,7 @@ reduce_kcwi -r -f kr241226_00XX[X-X].fits -g -c kcwi.cfg -st 3
 
 This creates multiple invsens files, one for each standard star exposure. We only need a single one for KSkyWizard. First, ensure 'compare_standard_invsens.py' is in the directory with all of your data. Then, we will check and compare each one before we choose which to use. Run:	
 ```bash
-python compare_standard_invsens.py redux/kr241226_00XXX_invsens.fits redux/kr241226_00XXX_invsens.fits redux/kr241226_00XXX_invsens.fits
+python compare_standard_invsens.py redux/krYYMMDD_XXXXX_invsens.fits redux/krYYMMDD_XXXXX_invsens.fits redux/krYYMMDD_XXXXX_invsens.fits
 ```
 
 Note the one with the lowest QC score, but also check the created plots to confirm. If everything looks decent, choose the one with the lowest QC score. Keep a note of which file that is.
@@ -61,7 +69,7 @@ conda activate kskywizard
 kskywizard
 ```
 
-From this gui, we need to set the input directory to be where the icubed files and the invsens file live. Set the output directory somewhere you will remember, as this is where we will take the corrected cubes and stack them with KcwiKit. Then, open the DRP invsens file that we selected earlier. We want to exclude any obvious emission or absorption lines that are very sharply peaked and that typically correspond to known elemental wavelengths (like Ha 6564). Hold 'e' and drag cursor over those points. When finished, hit 'f' to re-fit the sensitivity.
+From this gui, we need to set the input directory to be where the icubed files and the invsens file live. Set the output directory somewhere you will remember, as this is where we will take the corrected cubes and stack them with KcwiKit. Then, open the DRP invsens file that we selected earlier. We want to exclude any obvious emission or absorption lines that are very sharply peaked and that typically correspond to known elemental wavelengths (like $\text{H}\alpha$ $6564\mathring{\text{A}}$). Hold 'e' and drag cursor over those points. When finished, hit 'f' to re-fit the sensitivity.
 
 Once happy with the cyan line's fit, hit 't' to generate the telluric correction model. This will take a bit and the gui will freeze, so wait until the output updates. Inspect the royal blue line, especially over the regions that have the dark green x's selected for telluric fitting. It's normal for it to follow the sharp spikes that we masked earlier. Once happy, press 'Save updated invsens'.
 
@@ -72,7 +80,7 @@ If using an in-field sky frame, we need to make it in the terminal. First, open 
 ```bash
 cd /Path/to/KSkyWizard/output/directory
 
-cat > kr241226_00172.reg <<'EOF'
+cat > krYYMMDD_XXXXX.reg <<'EOF'
 # Region file format: DS9 version 4.1
 image
 ellipse(center_x,center_y,radius_x,radius_y,angle)
@@ -94,9 +102,9 @@ We need to create 2 configuration files that live in the directory of our KSkyWi
 
 ```bash
 cat > red_kskywizard.list <<'EOF'
-/Users/maxpiper/Desktop/CRD_Decomposition/KCWI_TestData/kr<night>_00XXX 3 3
-/Users/maxpiper/Desktop/CRD_Decomposition/KCWI_TestData/kr<night>_00XXX 3 3
-/Users/maxpiper/Desktop/CRD_Decomposition/KCWI_TestData/kr<night>_00XXX 3 3
+/Users/maxpiper/Desktop/CRD_Decomposition/KCWI_TestData/krYYMMDD_XXXXX 3 3
+/Users/maxpiper/Desktop/CRD_Decomposition/KCWI_TestData/krYYMMDD_XXXXX 3 3
+/Users/maxpiper/Desktop/CRD_Decomposition/KCWI_TestData/krYYMMDD_XXXXX 3 3
 EOF
 ```
 
@@ -133,7 +141,7 @@ reduce_kcwi -b -f kb*.fits -g -c kcwi.cfg -st 1
 We will then make sure the galaxy continuum is not in the sky subtraction. Run:
 
 ```bash
-cd  /Users/maxpiper/KcwiKit
+cd  /Users/maxpiper/CRD_DRP
 jupyter notebook
 ```
 Then, open 'create_region_masks.ipynb'. Change the directory to it points to the kcwidrp redux directory, and ensure the frame roots contain all of the blue frames we want. Run the cell, then inspect the output. We want the left plot's ellipse to comfortable encompass the entire galaxy and its faint surrounding region. The right will show the intf detector representation with the actual pixels that will be excluded from the sky calc. Also check the output 'Value IFU area masked' and make sure this is sensible and not ~0% or ~100%. If you are happy with the result, run the next cell, which renames those files to the real _smsk.fits binary mask files. Then, run the final cell to create the kcwi.sky file.
@@ -181,9 +189,9 @@ We need to create 2 configuration files that live in the directory of our KSkyWi
 
 ```bash
 cat > blue_kskywizard.list <<'EOF'
-/Volumes/Mainframe/KCWI/KcwiKit_Redux/redux/kb<night>_00XXX 3 3
-/Volumes/Mainframe/KCWI/KcwiKit_Redux/redux/kb<night>_00XXX 3 3
-/Volumes/Mainframe/KCWI/KcwiKit_Redux/redux/kb<night>_00XXX 3 3
+/Volumes/Mainframe/KCWI/KcwiKit_Redux/redux/kbYYMMDD_XXXXX 3 3
+/Volumes/Mainframe/KCWI/KcwiKit_Redux/redux/kbYYMMDD_XXXXX 3 3
+/Volumes/Mainframe/KCWI/KcwiKit_Redux/redux/kbYYMMDD_XXXXX 3 3
 EOF
 ```
 
@@ -204,7 +212,7 @@ EOF
 We will run this in a Jupyter notebook. Run:	
 
 ```bash
-cd /Users/maxpiper/KcwiKit
+cd /Users/maxpiper/CRD_DRP
 jupyter notebook
 ```
 
