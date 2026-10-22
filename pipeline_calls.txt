@@ -1,3 +1,5 @@
+# Historical commands for the earlier full-range stacks. For the current red ZAP and reproducible blue science stacks, use noise/README.md and its new atmospheric-mask/manifest commands.
+
 python validation/01_validate_kcwikit_stacks.py \
     --blue-icube /Users/maxpiper/KCWI_Data/redux/kskywizard/blue_kskywizard_icubes.fits \
     --red-icube  /Users/maxpiper/KCWI_Data/redux/kskywizard/red_kskywizard_icubes.fits \
