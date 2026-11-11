@@ -1,0 +1,44 @@
+{
+  "schema": "crd-kcwikit-replay-v1",
+  "arm": "RH3",
+  "par_file": "/Users/maxpiper/KCWI_Data/redux/kskywizard/red_kskywizard.par",
+  "shift_file": "/Users/maxpiper/KCWI_Data/redux/kskywizard/red_kskywizard.shift.list",
+  "reference_icube": null,
+  "exposures": [
+    {
+      "path": "/Users/maxpiper/KCWI_Data/redux/kskywizard/kr241226_00172_zap_icubes.fits",
+      "trim": [
+        3,
+        3
+      ]
+    },
+    {
+      "path": "/Users/maxpiper/KCWI_Data/redux/kskywizard/kr241226_00173_zap_icubes.fits",
+      "trim": [
+        3,
+        3
+      ]
+    },
+    {
+      "path": "/Users/maxpiper/KCWI_Data/redux/kskywizard/kr241226_00174_zap_icubes.fits",
+      "trim": [
+        3,
+        3
+      ]
+    },
+    {
+      "path": "/Users/maxpiper/KCWI_Data/redux/kskywizard/kr241226_00175_zap_icubes.fits",
+      "trim": [
+        3,
+        3
+      ]
+    }
+  ],
+  "stack_kwargs": {
+    "drizzle": 0.9,
+    "method": "drizzle",
+    "nsigma_clip": 10,
+    "npix_trim": 3
+  },
+  "sidecars": {}
+}

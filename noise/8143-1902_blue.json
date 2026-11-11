@@ -1,0 +1,23 @@
+{
+  "schema": "crd-kcwikit-replay-v1",
+  "arm": "BL",
+  "par_file": "/Users/maxpiper/KCWI_Data/redux/kskywizard/blue_kskywizard.par",
+  "shift_file": "/Users/maxpiper/KCWI_Data/redux/kskywizard/blue_kskywizard.shift.list",
+  "reference_icube": null,
+  "exposures": [
+    {
+      "path": "/Users/maxpiper/KCWI_Data/redux/kb241226_00119_icubes.fits",
+      "trim": [
+        3,
+        3
+      ]
+    }
+  ],
+  "stack_kwargs": {
+    "drizzle": 0.9,
+    "method": "drizzle",
+    "nsigma_clip": 10,
+    "npix_trim": 3
+  },
+  "sidecars": {}
+}
