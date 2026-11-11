@@ -1,10 +1,6 @@
 # Stack ZAP science cubes and replay the same stack with Gaussian noise
 
-This records the completed 8143-1902 setup, so its two named JSON files are
-fixed snapshots. For a new reduction, generate both recipes from the final
-blue and red `.list` files with `make_recipe.py` as shown in
-`INSTRUCTIONS_COMPLETE_NOISE_REDUCTION.md`; the number of exposures then comes
-from the lists rather than these examples.
+This records the completed 8143-1902 setup, so its two named JSON files are fixed snapshots. This is mainly for my own notes, but could be helpful for troubleshooting For a new reduction, generate both recipes from the final blue and red `.list` files with `make_recipe.py` as shown in `INSTRUCTIONS_COMPLETE_NOISE_REDUCTION.md`; the number of exposures then comes from the lists rather than these examples.
 
 The current red `_zap_icubes.fits` exposures are the intended science inputs.
 KSkyWizard first ran `crop_cube` on the earlier DRP cubes, selecting the header's
